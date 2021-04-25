@@ -1,0 +1,42 @@
+
+name: CI
+
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set PYENV
+        run: |
+          echo "PYENV=$env:GITHUB_WORKSPACE\pyenv-win" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      
+      - name: Set PATH
+        run: |
+          echo "$env:PYENV\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:PYENV\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          
+      - name: Install & run pytest
+        run: |
+          pyenv --version
+          pyenv update
+          $PYTHON_VERSION = Get-Content $env:PYENV\..\.python-version
+          pyenv install -q $PYTHON_VERSION
+          pyenv global $PYTHON_VERSION
+          pyenv versions
+          python --version
+          pip install -r requirements_dev.txt
+          pyenv rehash
+          $PYTHONPATH = "."
+          python -m pytest -v -s tests
